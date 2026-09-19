@@ -16,15 +16,7 @@ Across multiple iteration cycles, the fused hybrid architecture achieved consist
 
 The demonstration video below records real-time board tracking, speculative decision generation, in-page direction overlay rendering, and telemetry streaming during active play on Chess.com.
 
-
-
 https://github.com/user-attachments/assets/b85eeb92-3464-4005-9c6e-c393da28ba01
-
-
-
-<video src="./chess with jev.mp4" controls width="100%"></video>
-
-[Download or View Demonstration Video](./chess with jev.mp4)
 
 ---
 
