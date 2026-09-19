@@ -1,0 +1,29 @@
+{
+  "name": "chess-with-jev",
+  "version": "1.0.0",
+  "description": "Chrome extension and decision engine testing TypeSafe AI Jev model on Chess.com",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "server": "npm --prefix server run dev",
+    "server:start": "npm --prefix server run start",
+    "server:test": "npm --prefix server run test",
+    "server:test:live": "npm --prefix server run test:live",
+    "server:build": "npm --prefix server run build"
+  },
+  "dependencies": {
+    "chess.js": "^1.0.0-beta.8"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.308",
+    "@types/node": "^22.13.9",
+    "jsdom": "^27.4.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0",
+    "vite-plugin-static-copy": "^2.2.0",
+    "vitest": "^3.0.7"
+  }
+}

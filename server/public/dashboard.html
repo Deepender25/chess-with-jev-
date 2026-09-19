@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess with Jev • Telemetry & Decision Suite</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: #080808;
+      --card-bg-elevated: #0f0f0f;
+      --border: #1e1e1e;
+      --border-light: #2c2c2c;
+      --text: #f5f5f5;
+      --text-muted: #888888;
+      --text-dim: #555555;
+      --accent: #ffffff;
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.1);
+      --green-border: rgba(16, 185, 129, 0.3);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.1);
+      --red-border: rgba(239, 68, 68, 0.3);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.1);
+      --amber-border: rgba(245, 158, 11, 0.3);
+      --sq-dark: #121212;
+      --sq-light: #222222;
+      --sq-highlight-from: rgba(16, 185, 129, 0.28);
+      --sq-highlight-to: rgba(255, 255, 255, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 16px 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 24px;
+      height: 24px;
+      background: #141414;
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-family: monospace;
+      color: #ffffff;
+      font-weight: 900;
+    }
+
+    .brand-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: #ffffff;
+      font-family: monospace;
+    }
+
+    .brand-subtitle {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      background: var(--card-bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    .status-badge.online {
+      color: var(--green);
+      border-color: var(--green-border);
+      background: var(--green-bg);
+    }
+
+    .status-badge.offline {
+      color: var(--red);
+      border-color: var(--red-border);
+      background: var(--red-bg);
+    }
+
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .btn-minimal {
+      background: #121212;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: monospace;
+      transition: all 0.15s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .btn-minimal:hover {
+      background: #1c1c1c;
+      border-color: var(--border-light);
+      color: #ffffff;
+    }
+
+    /* Main Grid Layout: Big Hero Board + Thin Sleek Right Column */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(620px, 680px) 440px;
+      gap: 16px;
+      flex: 1;
+      justify-content: center;
+      align-items: start;
+    }
+
+    @media (max-width: 1180px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+        justify-content: stretch;
+      }
+    }
+
+    /* Left Column: Big 640px Board & Status */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .panel-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: monospace;
+    }
+
+    .panel-subtitle {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+
+    /* Bigger Chessboard Container (640px x 640px) */
+    .board-wrapper {
+      position: relative;
+      width: 640px;
+      height: 640px;
+      max-width: 100%;
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--sq-dark);
+    }
+
+    @media (max-width: 700px) {
+      .board-wrapper { width: 100%; height: auto; }
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      width: 100%;
+      height: 100%;
+    }
+
+    .square {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .square.dark { background-color: var(--sq-dark); }
+    .square.light { background-color: var(--sq-light); }
+
+    .square.highlight-from {
+      background-color: var(--sq-highlight-from) !important;
+      outline: 2px solid var(--green);
+      outline-offset: -2px;
+    }
+
+    .square.highlight-to {
+      background-color: var(--sq-highlight-to) !important;
+      outline: 2px solid #ffffff;
+      outline-offset: -2px;
+    }
+
+    .square-coord {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a4a4a;
+      pointer-events: none;
+      font-family: monospace;
+    }
+
+    .square-coord.rank { top: 3px; left: 4px; }
+    .square-coord.file { bottom: 3px; right: 4px; }
+
+    .piece-icon {
+      font-size: 50px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9));
+    }
+
+    .piece-w { color: #ffffff; }
+    .piece-b { color: #888888; }
+
+    /* SVG Overlay for Thin Surgical Arrows */
+    .board-svg-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Board Controls & Turn Info */
+    .turn-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .turn-circle {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+    }
+
+    .turn-circle.black { background: #333333; }
+
+    .fen-box {
+      display: flex;
+      align-items: center;
+      background: var(--card-bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 8px;
+      gap: 6px;
+    }
+
+    .fen-string {
+      font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+      font-size: 10px;
+      color: #aaaaaa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    /* Positional Fact Box */
+    .facts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .fact-item {
+      background: var(--card-bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .fact-label {
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      font-family: monospace;
+    }
+
+    .fact-value {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: monospace;
+      color: #ffffff;
+    }
+
+    /* Right Column: Thin, Compact, Elegant */
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+    }
+
+    /* Decision Hero Header */
+    .prediction-hero {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .move-recommendation {
+      font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+      font-size: 30px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+
+    .decision-path-tag {
+      font-size: 9px;
+      font-weight: 800;
+      font-family: monospace;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #141414;
+      border: 1px solid var(--border-light);
+      color: #dddddd;
+    }
+
+    .decision-path-tag.mate {
+      background: var(--amber-bg);
+      border-color: var(--amber-border);
+      color: var(--amber);
+    }
+
+    /* 2x2 Clean Metric Matrix for Thin Sidebar */
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .metric-box {
+      background: var(--card-bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .metric-label {
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      font-family: monospace;
+    }
+
+    .metric-value {
+      font-size: 12px;
+      font-weight: 700;
+      font-family: monospace;
+      color: #ffffff;
+    }
+
+    /* Deep Jev Thinking Breakdown Container */
+    .deep-thinking-section {
+      background: var(--card-bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .thinking-header {
+      font-size: 9px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-family: monospace;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .thinking-narrative {
+      font-size: 11px;
+      line-height: 1.45;
+      color: #cccccc;
+    }
+
+    /* Tactical Radar Matrix */
+    .tactical-flags-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tactical-pill {
+      font-size: 8px;
+      font-weight: 800;
+      font-family: monospace;
+      padding: 2px 6px;
+      border-radius: 2px;
+      background: #141414;
+      border: 1px solid var(--border);
+      color: #aaaaaa;
+      text-transform: uppercase;
+    }
+
+    .tactical-pill.alert {
+      background: var(--red-bg);
+      border-color: var(--red-border);
+      color: var(--red);
+    }
+
+    .tactical-pill.promo {
+      background: var(--amber-bg);
+      border-color: var(--amber-border);
+      color: var(--amber);
+    }
+
+    .tactical-pill.highlight {
+      background: #1a1a1a;
+      border-color: #333333;
+      color: #ffffff;
+    }
+
+    /* Candidate Trade-Offs & Comparison */
+    .tradeoffs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tradeoff-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 5px 8px;
+    }
+
+    .tradeoff-item.selected {
+      border-color: var(--green-border);
+      background: rgba(16, 185, 129, 0.04);
+    }
+
+    .tradeoff-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .tradeoff-san {
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .tradeoff-eval {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .tradeoff-desc {
+      font-size: 10px;
+      color: #888888;
+      line-height: 1.35;
+    }
+
+    /* Verified Candidates Progress Bars */
+    .candidates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .candidate-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card-bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 5px 8px;
+      font-size: 11px;
+    }
+
+    .candidate-rank {
+      font-weight: 700;
+      color: var(--text-dim);
+      font-family: monospace;
+      width: 14px;
+    }
+
+    .candidate-move {
+      font-weight: 800;
+      font-family: monospace;
+      color: #ffffff;
+      width: 48px;
+    }
+
+    .candidate-bar-bg {
+      flex: 1;
+      height: 4px;
+      background: #181818;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .candidate-bar-fill {
+      height: 100%;
+      background: #ffffff;
+      border-radius: 2px;
+    }
+
+    .candidate-prob {
+      font-family: monospace;
+      font-weight: 800;
+      color: var(--text);
+      width: 32px;
+      text-align: right;
+      font-size: 10px;
+    }
+
+    /* History Table */
+    .table-wrapper {
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: left;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: #101010;
+      color: var(--text-dim);
+      font-weight: 800;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      font-family: monospace;
+      z-index: 1;
+    }
+
+    td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #111111;
+      color: var(--text-muted);
+      font-family: monospace;
+      font-size: 10px;
+    }
+
+    tr:hover td {
+      background: #141414;
+      cursor: pointer;
+      color: #ffffff;
+    }
+
+    tr.active-row td {
+      background: #181818;
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .td-move {
+      font-weight: 800;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-icon">JEV</div>
+      <div>
+        <div class="brand-title">CHESS with JEV • TELEMETRY</div>
+        <div class="brand-subtitle">TypeSafe AI • System One Speculative Stream</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="status-badge online" id="connection-badge">
+        <span class="status-dot"></span>
+        <span id="connection-text">SOCKET LIVE</span>
+      </div>
+      <button class="btn-minimal" id="flip-board-btn">Flip Board</button>
+      <button class="btn-minimal" id="export-logs-btn">Export JSON</button>
+    </div>
+  </header>
+
+  <!-- Main Grid: Big Board + Thin Column -->
+  <div class="dashboard-grid">
+
+    <!-- Left Column: Big 640px Board & Facts -->
+    <div class="left-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>Live Board State</span>
+          </div>
+          <div class="turn-pill" id="board-turn-indicator">
+            <span class="turn-circle" id="turn-circle"></span>
+            <span id="turn-text">White to move</span>
+          </div>
+        </div>
+
+        <!-- 640px x 640px Chessboard -->
+        <div class="board-wrapper">
+          <div class="board-grid" id="chessboard-grid"></div>
+          <svg class="board-svg-overlay" id="board-arrow-svg"></svg>
+        </div>
+
+        <!-- FEN Input -->
+        <div class="fen-box">
+          <span class="fen-string" id="board-fen-text">rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1</span>
+          <button class="btn-minimal" id="copy-fen-btn">Copy</button>
+        </div>
+
+        <!-- Positional State Metrics -->
+        <div class="facts-grid">
+          <div class="fact-item">
+            <span class="fact-label">Material Balance</span>
+            <span class="fact-value" id="fact-material-text">Even (+0.0)</span>
+          </div>
+          <div class="fact-item">
+            <span class="fact-label">King Safety</span>
+            <span class="fact-value" id="fact-king-text">Standard Cover</span>
+          </div>
+          <div class="fact-item">
+            <span class="fact-label">Threat Status</span>
+            <span class="fact-value" id="fact-threat-text">No Danger</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Thin, Compact Decision Panel -->
+    <div class="right-col">
+
+      <!-- Decision Engine Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>Decision Engine</span>
+          </div>
+          <span class="decision-path-tag" id="decision-path-tag">Awaiting Move</span>
+        </div>
+
+        <div class="prediction-hero">
+          <div>
+            <div class="metric-label">Recommended Move</div>
+            <div class="move-recommendation" id="rec-move-text">...</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="metric-label">Confidence</div>
+            <div style="font-size: 22px; font-weight: 900; font-family: monospace; color: #ffffff;" id="rec-conf-text">--%</div>
+          </div>
+        </div>
+
+        <!-- 2x2 Telemetry Matrix -->
+        <div class="metrics-row">
+          <div class="metric-box">
+            <span class="metric-label">Evaluation</span>
+            <span class="metric-value" id="rec-eval-text">0.00</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Strategic Priority</span>
+            <span class="metric-value" id="rec-priority-text">Development</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Engine Depth</span>
+            <span class="metric-value" id="rec-depth-text">Depth --</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-label">Total Latency</span>
+            <span class="metric-value" id="rec-latency-text">-- ms</span>
+          </div>
+        </div>
+
+        <!-- Deep Jev Thinking & Analysis -->
+        <div class="deep-thinking-section">
+          <div class="thinking-header">
+            <span>Strategic Plan & Intent</span>
+            <span id="thinking-model-tag" style="color: var(--text-dim);">Jev System 1</span>
+          </div>
+          <div class="thinking-narrative" id="rec-rationale-text">
+            Waiting for moves from Chess.com...
+          </div>
+          
+          <div class="tactical-flags-grid" id="tactical-flags-container"></div>
+        </div>
+
+        <!-- Candidate Move Trade-Offs & Comparison -->
+        <div class="panel-header" style="margin-top: 2px; padding-bottom: 4px;">
+          <span class="panel-title">Candidate Trade-Offs</span>
+          <span class="panel-subtitle" id="pv-line-text">PV: None</span>
+        </div>
+        <div class="tradeoffs-container" id="tradeoffs-container">
+          <div style="font-size: 10px; color: var(--text-dim); padding: 2px 0; font-family: monospace;">
+            No candidate comparison available.
+          </div>
+        </div>
+
+        <!-- Verified Candidates Progress Bars -->
+        <div class="panel-header" style="margin-top: 2px; padding-bottom: 4px;">
+          <span class="panel-title">Top Candidates</span>
+          <span class="panel-subtitle">Probabilities</span>
+        </div>
+        <div class="candidates-list" id="candidates-container">
+          <div style="font-size: 10px; color: var(--text-dim); padding: 2px 0; font-family: monospace;">
+            No active candidate moves.
+          </div>
+        </div>
+      </div>
+
+      <!-- Chronological Move History Log -->
+      <div class="panel" style="flex: 1;">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>Move History</span>
+          </div>
+          <span class="panel-subtitle" id="history-count">0 plies</span>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Ply</th>
+                <th>Turn</th>
+                <th>Move</th>
+                <th>Conf</th>
+                <th>Eval</th>
+                <th>Path</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-dim); padding: 18px;">
+                  No moves recorded yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Unicode chess piece characters
+    const PIECE_GLYPHS = {
+      'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
+      'P': '♟', 'R': '♜', 'N': '♞', 'B': '♝', 'Q': '♛', 'K': '♚'
+    };
+
+    let isFlipped = false;
+    let currentFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    let currentHighlightFrom = null;
+    let currentHighlightTo = null;
+    let historyLogs = [];
+
+    // DOM Elements
+    const gridEl = document.getElementById('chessboard-grid');
+    const svgEl = document.getElementById('board-arrow-svg');
+    const fenTextEl = document.getElementById('board-fen-text');
+    const turnCircleEl = document.getElementById('turn-circle');
+    const turnTextEl = document.getElementById('turn-text');
+    const factMaterialEl = document.getElementById('fact-material-text');
+    const factKingEl = document.getElementById('fact-king-text');
+    const factThreatEl = document.getElementById('fact-threat-text');
+    const recMoveEl = document.getElementById('rec-move-text');
+    const recConfEl = document.getElementById('rec-conf-text');
+    const recEvalEl = document.getElementById('rec-eval-text');
+    const recPriorityEl = document.getElementById('rec-priority-text');
+    const recDepthEl = document.getElementById('rec-depth-text');
+    const recLatencyEl = document.getElementById('rec-latency-text');
+    const recRationaleEl = document.getElementById('rec-rationale-text');
+    const thinkingModelTagEl = document.getElementById('thinking-model-tag');
+    const pathTagEl = document.getElementById('decision-path-tag');
+    const pvTextEl = document.getElementById('pv-line-text');
+    const flagsContainerEl = document.getElementById('tactical-flags-container');
+    const tradeoffsContainerEl = document.getElementById('tradeoffs-container');
+    const candidatesContainerEl = document.getElementById('candidates-container');
+    const historyTbodyEl = document.getElementById('history-tbody');
+    const historyCountEl = document.getElementById('history-count');
+    const connBadgeEl = document.getElementById('connection-badge');
+    const connTextEl = document.getElementById('connection-text');
+
+    /** Renders the 8x8 chessboard from FEN */
+    function renderBoard(fen, fromSq = null, toSq = null) {
+      currentFen = fen;
+      currentHighlightFrom = fromSq;
+      currentHighlightTo = toSq;
+
+      const fenParts = fen.split(' ');
+      const placement = fenParts[0] || '';
+      const turn = fenParts[1] || 'w';
+
+      fenTextEl.textContent = fen;
+      turnTextEl.textContent = turn === 'w' ? 'White to move' : 'Black to move';
+      turnCircleEl.className = `turn-circle ${turn === 'w' ? '' : 'black'}`;
+
+      // Build 8x8 matrix
+      const matrix = Array(8).fill(null).map(() => Array(8).fill(''));
+      const ranks = placement.split('/');
+
+      for (let r = 0; r < 8; r++) {
+        let f = 0;
+        const rankStr = ranks[r] || '';
+        for (let i = 0; i < rankStr.length; i++) {
+          const char = rankStr[i];
+          if (char >= '1' && char <= '8') {
+            f += parseInt(char, 10);
+          } else {
+            if (f < 8) {
+              matrix[r][f] = char;
+            }
+            f++;
+          }
+        }
+      }
+
+      gridEl.innerHTML = '';
+
+      for (let displayRow = 0; displayRow < 8; displayRow++) {
+        for (let displayCol = 0; displayCol < 8; displayCol++) {
+          const r = isFlipped ? 7 - displayRow : displayRow;
+          const f = isFlipped ? 7 - displayCol : displayCol;
+
+          const squareName = String.fromCharCode('a'.charCodeAt(0) + f) + (8 - r);
+          const isLight = (r + f) % 2 === 0;
+
+          const sqDiv = document.createElement('div');
+          sqDiv.className = `square ${isLight ? 'light' : 'dark'}`;
+          sqDiv.dataset.square = squareName;
+
+          if (squareName === fromSq) sqDiv.classList.add('highlight-from');
+          if (squareName === toSq) sqDiv.classList.add('highlight-to');
+
+          // Add Rank coordinate on leftmost column
+          if (displayCol === 0) {
+            const rankLabel = document.createElement('span');
+            rankLabel.className = 'square-coord rank';
+            rankLabel.textContent = (8 - r).toString();
+            sqDiv.appendChild(rankLabel);
+          }
+
+          // Add File coordinate on bottom row
+          if (displayRow === 7) {
+            const fileLabel = document.createElement('span');
+            fileLabel.className = 'square-coord file';
+            fileLabel.textContent = String.fromCharCode('a'.charCodeAt(0) + f);
+            sqDiv.appendChild(fileLabel);
+          }
+
+          const pieceChar = matrix[r][f];
+          if (pieceChar) {
+            const pieceSpan = document.createElement('span');
+            const isWhitePiece = pieceChar === pieceChar.toUpperCase();
+            pieceSpan.className = `piece-icon ${isWhitePiece ? 'piece-w' : 'piece-b'}`;
+            pieceSpan.textContent = PIECE_GLYPHS[pieceChar] || pieceChar;
+            sqDiv.appendChild(pieceSpan);
+          }
+
+          gridEl.appendChild(sqDiv);
+        }
+      }
+
+      renderArrow(fromSq, toSq);
+    }
+
+    /** Draws sleek, thin surgical arrow from source to target square */
+    function renderArrow(fromSq, toSq) {
+      svgEl.innerHTML = '';
+      if (!fromSq || !toSq || fromSq === toSq) return;
+
+      const fromCoord = squareToCoordinates(fromSq);
+      const toCoord = squareToCoordinates(toSq);
+      if (!fromCoord || !toCoord) return;
+
+      const markerId = 'arrow-marker';
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+      marker.setAttribute('id', markerId);
+      marker.setAttribute('viewBox', '0 0 10 10');
+      marker.setAttribute('refX', '5');
+      marker.setAttribute('refY', '5');
+      marker.setAttribute('markerWidth', '5');
+      marker.setAttribute('markerHeight', '5');
+      marker.setAttribute('orient', 'auto-start-reverse');
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M 0 2 L 8 5 L 0 8 z');
+      path.setAttribute('fill', '#ffffff');
+      marker.appendChild(path);
+      defs.appendChild(marker);
+      svgEl.appendChild(defs);
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', `${fromCoord.x}%`);
+      line.setAttribute('y1', `${fromCoord.y}%`);
+      line.setAttribute('x2', `${toCoord.x}%`);
+      line.setAttribute('y2', `${toCoord.y}%`);
+      line.setAttribute('stroke', '#ffffff');
+      line.setAttribute('stroke-width', '2.8');
+      line.setAttribute('stroke-linecap', 'round');
+      line.setAttribute('marker-end', `url(#${markerId})`);
+      svgEl.appendChild(line);
+    }
+
+    function squareToCoordinates(sq) {
+      if (!sq || sq.length < 2) return null;
+      const file = sq.charCodeAt(0) - 'a'.charCodeAt(0);
+      const rank = parseInt(sq[1], 10) - 1;
+      const col = isFlipped ? 7 - file : file;
+      const row = isFlipped ? rank : 7 - rank;
+      return {
+        x: (col + 0.5) * 12.5,
+        y: (row + 0.5) * 12.5
+      };
+    }
+
+    /** Updates UI with full Jev Decision telemetry */
+    function updateDecisionUI(fen, decision) {
+      if (!decision) return;
+
+      renderBoard(fen, decision.fromSquare, decision.toSquare);
+
+      recMoveEl.textContent = decision.recommendedMove || 'None';
+      recConfEl.textContent = `${Math.round((decision.confidence || 0) * 100)}%`;
+
+      // Decision Path Badge
+      const pathText = (decision.decisionPath || 'jev_plan').replace(/_/g, ' ').toUpperCase();
+      pathTagEl.textContent = pathText;
+      pathTagEl.className = `decision-path-tag ${pathText.includes('MATE') ? 'mate' : ''}`;
+
+      // Metrics
+      const evalPawns = decision.engineEvalPawns !== undefined
+        ? `${decision.engineEvalPawns > 0 ? '+' : ''}${decision.engineEvalPawns.toFixed(2)}`
+        : decision.positionEvaluationLabel || '--';
+      recEvalEl.textContent = evalPawns;
+
+      recPriorityEl.textContent = (decision.strategicPriority || decision.strategicTheme || 'Development').replace(/_/g, ' ').toUpperCase();
+      
+      const nodesStr = decision.engineNodes ? ` (${decision.engineNodes.toLocaleString()} nodes)` : '';
+      recDepthEl.textContent = decision.engineDepth ? `Depth ${decision.engineDepth}${nodesStr}` : 'Fast Heuristic';
+      recLatencyEl.textContent = `${decision.latencyMs || 0} ms`;
+
+      // Positional State Metrics
+      if (decision.materialDelta !== undefined) {
+        factMaterialEl.textContent = `${decision.materialDelta > 0 ? '+' : ''}${decision.materialDelta} Pawns`;
+      } else {
+        factMaterialEl.textContent = 'Balanced';
+      }
+
+      factKingEl.textContent = decision.enemyKingExposure ? decision.enemyKingExposure.replace(/_/g, ' ').toUpperCase() : 'Secure';
+      factThreatEl.textContent = decision.threatAlert ? 'Active Threat' : decision.isTacticalDanger ? 'Under Attack' : 'Clear';
+
+      // Strategic Rationale & Narrative
+      recRationaleEl.textContent = decision.strategicRationale || 'Standard tactical progression.';
+      thinkingModelTagEl.textContent = decision.isSimulated ? 'Search Engine' : (decision.jevModel || 'Jev System 1');
+
+      // Tactical Radar Flags
+      flagsContainerEl.innerHTML = '';
+      if (decision.isCheckmateOpportunity) {
+        addFlag('CHECKMATE SEQUENCE', 'promo');
+      }
+      if (decision.isTacticalDanger) {
+        addFlag('TACTICAL DANGER / CHECK', 'alert');
+      }
+      if (decision.threatAlert) {
+        addFlag(decision.threatAlert.toUpperCase(), 'alert');
+      }
+      if (decision.promotionAlert) {
+        addFlag(decision.promotionAlert.toUpperCase(), 'promo');
+      }
+      if (decision.enemyKingExposure && decision.enemyKingExposure.includes('EXPOSED')) {
+        addFlag('ENEMY KING EXPOSED', 'highlight');
+      }
+
+      // Principal Variation Line
+      if (decision.enginePvSan && decision.enginePvSan.length > 0) {
+        pvTextEl.textContent = `PV: ${decision.enginePvSan.slice(0, 5).join(' ')}`;
+      } else {
+        pvTextEl.textContent = 'PV: None';
+      }
+
+      // Candidate Trade-Offs & Comparison
+      if (decision.topCandidates && decision.topCandidates.length > 0) {
+        tradeoffsContainerEl.innerHTML = decision.topCandidates.map((cand, idx) => {
+          const isSelected = cand.move === decision.recommendedMove || idx === 0;
+          const scoreText = cand.scoreCp !== undefined ? `${(cand.scoreCp / 100).toFixed(2)} cp` : '';
+          const lossText = cand.evalLossCp !== undefined && cand.evalLossCp > 0 ? `-${(cand.evalLossCp / 100).toFixed(2)} loss` : '';
+          const descText = cand.purpose ? `${cand.purpose}. ${cand.risk ? cand.risk + '.' : ''}` : `Rank #${idx + 1} candidate with ${(cand.probability * 100).toFixed(0)}% probability.`;
+
+          return `
+            <div class="tradeoff-item ${isSelected ? 'selected' : ''}">
+              <div class="tradeoff-title-row">
+                <span class="tradeoff-san">#${idx + 1} ${cand.move} ${isSelected ? '• BEST' : ''}</span>
+                <span class="tradeoff-eval">${scoreText} ${lossText}</span>
+              </div>
+              <div class="tradeoff-desc">${descText}</div>
+            </div>
+          `;
+        }).join('');
+
+        candidatesContainerEl.innerHTML = decision.topCandidates.map((cand, idx) => `
+          <div class="candidate-item">
+            <span class="candidate-rank">#${idx + 1}</span>
+            <span class="candidate-move">${cand.move}</span>
+            <div class="candidate-bar-bg">
+              <div class="candidate-bar-fill" style="width: ${Math.round((cand.probability || 0) * 100)}%;"></div>
+            </div>
+            <span class="candidate-prob">${Math.round((cand.probability || 0) * 100)}%</span>
+          </div>
+        `).join('');
+      } else {
+        tradeoffsContainerEl.innerHTML = '<div style="font-size: 10px; color: var(--text-dim); padding: 2px 0; font-family: monospace;">No candidate moves available.</div>';
+        candidatesContainerEl.innerHTML = '<div style="font-size: 10px; color: var(--text-dim); padding: 2px 0; font-family: monospace;">No active candidate moves.</div>';
+      }
+    }
+
+    function addFlag(text, type) {
+      const pill = document.createElement('span');
+      pill.className = `tactical-pill ${type}`;
+      pill.textContent = text;
+      flagsContainerEl.appendChild(pill);
+    }
+
+    /** Fetches recent telemetry logs from backend */
+    async function fetchLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        if (res.ok) {
+          const data = await res.json();
+          historyLogs = data.logs || [];
+          renderHistoryTable(historyLogs);
+        }
+      } catch (err) {
+        console.debug('Polling error:', err);
+      }
+    }
+
+    function renderHistoryTable(logs) {
+      historyCountEl.textContent = `${logs.length} plies`;
+      if (!logs || logs.length === 0) return;
+
+      historyTbodyEl.innerHTML = logs.slice().reverse().map((entry, idx) => `
+        <tr onclick="inspectHistoricalEntry(${logs.length - 1 - idx})" title="Click to view board and Jev recommendation at this move">
+          <td><strong>#${entry.moveNumber || 1}</strong></td>
+          <td>${entry.sideToMove === 'w' ? 'W' : 'B'}</td>
+          <td class="td-move">${entry.recommendedMove || 'None'}</td>
+          <td>${Math.round((entry.confidence || 0) * 100)}%</td>
+          <td>${entry.positionScore !== undefined ? entry.positionScore.toFixed(2) : '--'}</td>
+          <td><span class="tactical-pill" style="font-size: 8px;">${(entry.strategicTheme || 'play').replace(/_/g, ' ').toUpperCase()}</span></td>
+          <td>${new Date(entry.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td>
+        </tr>
+      `).join('');
+    }
+
+    window.inspectHistoricalEntry = function(index) {
+      const entry = historyLogs[index];
+      if (entry) {
+        updateDecisionUI(entry.fen, entry);
+      }
+    };
+
+    // WebSocket Real-time Listener
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      connBadgeEl.className = 'status-badge online';
+      connTextEl.textContent = 'SOCKET LIVE';
+    };
+
+    ws.onclose = () => {
+      connBadgeEl.className = 'status-badge offline';
+      connTextEl.textContent = 'DISCONNECTED';
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'RECOMMENDATION' && msg.payload) {
+          updateDecisionUI(msg.payload.fen, msg.payload.decision);
+          fetchLogs();
+        }
+      } catch (e) {
+        console.error('WS Parse Error:', e);
+      }
+    };
+
+    // Control Handlers
+    document.getElementById('flip-board-btn').addEventListener('click', () => {
+      isFlipped = !isFlipped;
+      renderBoard(currentFen, currentHighlightFrom, currentHighlightTo);
+    });
+
+    document.getElementById('copy-fen-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(currentFen).then(() => {
+        const btn = document.getElementById('copy-fen-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      });
+    });
+
+    document.getElementById('export-logs-btn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(historyLogs, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `chess_jev_telemetry_${Date.now()}.json`;
+      a.click();
+    });
+
+    // Initial render & log polling
+    renderBoard(currentFen);
+    fetchLogs();
+    setInterval(fetchLogs, 2500);
+  </script>
+</body>
+</html>

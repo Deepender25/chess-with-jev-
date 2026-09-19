@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chess with Jev</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-icon">JEV</div>
+        <div class="brand-text">
+          <h1>CHESS with JEV</h1>
+          <span class="subtext">TypeSafe AI • System One</span>
+        </div>
+      </div>
+      <div class="status-indicator online" id="status-indicator">
+        <span class="status-dot"></span>
+        <span class="status-label" id="status-label">ACTIVE</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Turn & Move Info -->
+      <div class="card turn-card">
+        <div class="turn-info">
+          <span class="turn-dot" id="turn-symbol"></span>
+          <span class="turn-text" id="turn-text">White to move</span>
+        </div>
+        <div class="move-info" id="move-info">Move #1</div>
+      </div>
+
+      <!-- Jev Recommendation Card -->
+      <div class="card recommendation-card" id="popup-rec-card">
+        <div class="card-header">
+          <span class="card-title">RECOMMENDATION</span>
+          <span class="badge latency-badge" id="popup-latency">Ready</span>
+        </div>
+        <div class="rec-main">
+          <span class="rec-move" id="popup-rec-move">...</span>
+          <span class="confidence-badge" id="popup-conf" style="display: none;">--%</span>
+        </div>
+        <div class="rec-details" id="popup-rec-details" style="display: none;">
+          <span class="detail-tag" id="popup-eval-tag">Eval: Equal</span>
+          <span class="detail-tag danger" id="popup-danger-tag" style="display: none;">Tactical Danger</span>
+        </div>
+      </div>
+
+      <!-- FEN Box -->
+      <div class="card fen-card">
+        <div class="card-header">
+          <span class="card-title">Verified FEN</span>
+          <span class="badge mate-badge" id="mate-badge" style="display: none;">MATE</span>
+        </div>
+        <div class="fen-wrapper">
+          <input type="text" class="fen-input" id="fen-input" readonly value="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1">
+          <button class="btn btn-primary" id="copy-btn">Copy</button>
+        </div>
+      </div>
+
+      <!-- Server Connection Status -->
+      <div class="card server-card">
+        <div class="server-status-row">
+          <span class="server-label">Local Engine (Port 8765)</span>
+          <span class="server-status-badge" id="server-status-badge">
+            <span class="server-dot" id="server-dot"></span>
+            <span id="server-status-text">Online</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button class="btn btn-secondary" id="toggle-hud-btn">Toggle In-Page HUD</button>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>Milestone 2 • Real-Time Jev Integration</span>
+    </footer>
+  </div>
+
+  <script type="module" src="popup.ts"></script>
+</body>
+</html>
