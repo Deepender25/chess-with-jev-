@@ -35,9 +35,14 @@ Thumbs.db
 .idea/
 .vscode/
 *.sublime-workspace
-*.sublime-project
-
 # Test & Coverage
 coverage/
 .nyc_output/
 .vitest/
+
+# Media Assets
+*.mp4
+*.mov
+*.avi
+
+
